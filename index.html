@@ -1,1 +1,91 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>AL Uploader</title><style>body{font-family:sans-serif;background:#111;color:#fff;padding:15px}.card{background:#222;padding:20px;border-radius:12px;max-width:400px;margin:auto}input,button,textarea{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:0;background:#333;color:#fff}button{background:red;font-weight:700}#log{margin-top:10px;font-size:14px;word-break:break-all}</style></head><body><div class="card"><h2>Upload YouTube</h2><input type="file" id="v" accept="video/*"><input id="j" placeholder="Judul"><textarea id="d" placeholder="Deskripsi"></textarea><button onclick="up()">Upload</button><div id="log">Siap</div></div><script>const API='GANTI_URL_RAILWAY/upload';async function up(){const f=v.files[0];if(!f)return log.innerText='Pilih video';log.innerText='Uploading...';const fd=new FormData();fd.append('video',f);fd.append('judul',j.value);fd.append('deskripsi',d.value);try{const r=await fetch(API,{method:'POST',body:fd}),d=await r.json();log.innerHTML=d.sukses?`Sukses: <a href="${d.link}" target="_blank">${d.link}</a>`:'Error: '+d.error}catch(e){log.innerText='Gagal konek'}};</script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AL Uploader YouTube</title>
+    <style>
+        body { font-family: system-ui; background: #0d0d0d; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1a1a1a; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        h1 { text-align: center; margin-top: 0; }
+        input, textarea, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: #fff; box-sizing: border-box; font-size: 16px; }
+        button { background: #ff0000; border: none; font-weight: bold; cursor: pointer; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        #formUpload, #loading { display: none; }
+        #status { text-align: center; margin-top: 15px; min-height: 20px; word-break: break-all; }
+        a { color: #3ea6ff; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>AL Uploader</h1>
+        
+        <div id="loginSection">
+            <button onclick="login()">Login dengan Google</button>
+        </div>
+
+        <div id="formUpload">
+            <input type="file" id="videoFile" accept="video/*">
+            <input type="text" id="judul" placeholder="Judul Video">
+            <textarea id="deskripsi" placeholder="Deskripsi" rows="3"></textarea>
+            <button id="btnUpload" onclick="upload()">Upload ke YouTube</button>
+        </div>
+        
+        <p id="status">Silakan login dulu</p>
+    </div>
+
+    <script>
+        const BASE_URL = window.location.origin;
+        
+        function login() {
+            window.location.href = `${BASE_URL}/auth`;
+        }
+
+        async function checkLogin() {
+            const res = await fetch(`${BASE_URL}/status`);
+            const data = await res.json();
+            if (data.logged_in) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('formUpload').style.display = 'block';
+                document.getElementById('status').innerText = 'Siap upload';
+            }
+        }
+        
+        window.onload = checkLogin;
+
+        async function upload() {
+            const file = document.getElementById('videoFile').files[0];
+            const btn = document.getElementById('btnUpload');
+            const status = document.getElementById('status');
+            
+            if (!file) return alert('Pilih file video dulu bos');
+            
+            btn.disabled = true;
+            status.innerText = 'Uploading... sabar bos, video gede lama';
+            
+            const formData = new FormData();
+            formData.append('video', file);
+            formData.append('title', document.getElementById('judul').value);
+            formData.append('desc', document.getElementById('deskripsi').value);
+            
+            try {
+                const res = await fetch(`${BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.sukses) {
+                    status.innerHTML = `Sukses! <a href="${data.link}" target="_blank">Lihat Video</a>`;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (e) {
+                status.innerText = 'Error: ' + e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
