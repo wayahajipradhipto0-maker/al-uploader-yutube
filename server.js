@@ -7,7 +7,6 @@ const path = require('path');
 
 const app = express();
 
-// Middleware
 app.use(express.static(__dirname));
 app.use(express.json());
 app.use(session({
@@ -18,16 +17,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Google OAuth Strategy - INI YANG BENERIN ERROR REDIRECT_URI
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: process.env.REDIRECT_URI, // INI WAJIB ADA
-    scope: [
-      'profile',
-      'email',
-      'https://www.googleapis.com/auth/youtube.upload'
-    ],
+    callbackURL: process.env.REDIRECT_URI,
+    scope: ['profile', 'email', 'https://www.googleapis.com/auth/youtube.upload'],
     accessType: 'offline',
     prompt: 'consent'
   },
@@ -41,21 +35,17 @@ passport.use(new GoogleStrategy({
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
-// Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Tombol Login
 app.get('/auth/google', passport.authenticate('google'));
 
-// Callback dari Google - WAJIB SAMA DENGAN DI GOOGLE CLOUD
 app.get('/oauth2callback',
   passport.authenticate('google', { failureRedirect: '/?error=gagal' }),
   (req, res) => res.redirect('/')
 );
 
-// Cek user udah login apa belum
 app.get('/api/user', (req, res) => {
   if (req.user) {
     res.json({
@@ -72,6 +62,5 @@ app.get('/logout', (req, res) => {
   req.logout(() => res.redirect('/'));
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server jalan di port ${PORT}`));
+app.listen(PORT, () => console.log('Server jalan di port ' + PORT));
