@@ -1,91 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AL Uploader YouTube</title>
+    <title>AL Uploader Youtube</title>
     <style>
-        body { font-family: system-ui; background: #0d0d0d; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: #1a1a1a; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-        h1 { text-align: center; margin-top: 0; }
-        input, textarea, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: #fff; box-sizing: border-box; font-size: 16px; }
-        button { background: #ff0000; border: none; font-weight: bold; cursor: pointer; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        #formUpload, #loading { display: none; }
-        #status { text-align: center; margin-top: 15px; min-height: 20px; word-break: break-all; }
-        a { color: #3ea6ff; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f0f0f;
+            color: white;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #212121;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        h1 { color: #ff0000; margin-bottom: 30px; }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #ff0000;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .btn-logout { background: #555; }
+        #user-info { margin: 20px 0; font-size: 18px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>AL Uploader</h1>
+    <div class="container">
+        <h1>AL Uploader Youtube</h1>
         
-        <div id="loginSection">
-            <button onclick="login()">Login dengan Google</button>
-        </div>
-
-        <div id="formUpload">
-            <input type="file" id="videoFile" accept="video/*">
-            <input type="text" id="judul" placeholder="Judul Video">
-            <textarea id="deskripsi" placeholder="Deskripsi" rows="3"></textarea>
-            <button id="btnUpload" onclick="upload()">Upload ke YouTube</button>
-        </div>
+        <div id="user-info">Silakan login dulu bos</div>
         
-        <p id="status">Silakan login dulu</p>
+        <a href="/auth/google" id="login-btn" class="btn">Login dengan Google</a>
+        <a href="/logout" id="logout-btn" class="btn btn-logout" style="display:none;">Logout</a>
     </div>
 
     <script>
-        const BASE_URL = window.location.origin;
-        
-        function login() {
-            window.location.href = `${BASE_URL}/auth`;
-        }
-
-        async function checkLogin() {
-            const res = await fetch(`${BASE_URL}/status`);
-            const data = await res.json();
-            if (data.logged_in) {
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('formUpload').style.display = 'block';
-                document.getElementById('status').innerText = 'Siap upload';
-            }
-        }
-        
-        window.onload = checkLogin;
-
-        async function upload() {
-            const file = document.getElementById('videoFile').files[0];
-            const btn = document.getElementById('btnUpload');
-            const status = document.getElementById('status');
-            
-            if (!file) return alert('Pilih file video dulu bos');
-            
-            btn.disabled = true;
-            status.innerText = 'Uploading... sabar bos, video gede lama';
-            
-            const formData = new FormData();
-            formData.append('video', file);
-            formData.append('title', document.getElementById('judul').value);
-            formData.append('desc', document.getElementById('deskripsi').value);
-            
-            try {
-                const res = await fetch(`${BASE_URL}/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
+        // Cek status login pas buka web
+        fetch('/api/user')
+            .then(res => res.json())
+            .then(data => {
+                const userInfo = document.getElementById('user-info');
+                const loginBtn = document.getElementById('login-btn');
+                const logoutBtn = document.getElementById('logout-btn');
                 
-                if (data.sukses) {
-                    status.innerHTML = `Sukses! <a href="${data.link}" target="_blank">Lihat Video</a>`;
+                if(data.loggedIn){
+                    userInfo.innerHTML = `Login Berhasil Bos!<br>Halo, ${data.name}<br>${data.email}`;
+                    loginBtn.style.display = 'none';
+                    logoutBtn.style.display = 'inline-block';
                 } else {
-                    throw new Error(data.error);
+                    userInfo.innerHTML = 'Silakan login dulu bos';
+                    loginBtn.style.display = 'inline-block';
+                    logoutBtn.style.display = 'none';
                 }
-            } catch (e) {
-                status.innerText = 'Error: ' + e.message;
-            } finally {
-                btn.disabled = false;
-            }
-        }
+            })
+            .catch(err => {
+                document.getElementById('user-info').innerHTML = 'Error cek login';
+            });
     </script>
 </body>
 </html>
